@@ -26,5 +26,7 @@ float lora_packet_snr(void);
 void lora_close(void);
 int lora_initialized(void);
 void lora_dump_registers(void);
+void lora_enable_low_data_rate_optimize(void);
+void lora_disable_low_data_rate_optimize(void);
 
 #endif

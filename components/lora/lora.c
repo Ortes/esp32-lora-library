@@ -1,4 +1,3 @@
-
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "esp_system.h"
@@ -75,7 +74,7 @@ static long __frequency;
  * @param reg Register index.
  * @param val Value to write.
  */
-void 
+void
 lora_write_reg(int reg, int val)
 {
    uint8_t out[2] = { 0x80 | reg, val };
@@ -85,7 +84,7 @@ lora_write_reg(int reg, int val)
       .flags = 0,
       .length = 8 * sizeof(out),
       .tx_buffer = out,
-      .rx_buffer = in  
+      .rx_buffer = in
    };
 
    gpio_set_level(CONFIG_CS_GPIO, 0);
@@ -120,7 +119,7 @@ lora_read_reg(int reg)
 /**
  * Perform physical reset on the Lora chip
  */
-void 
+void
 lora_reset(void)
 {
    gpio_set_level(CONFIG_RST_GPIO, 0);
@@ -133,7 +132,7 @@ lora_reset(void)
  * Configure explicit header mode.
  * Packet size will be included in the frame.
  */
-void 
+void
 lora_explicit_header_mode(void)
 {
    __implicit = 0;
@@ -145,7 +144,7 @@ lora_explicit_header_mode(void)
  * All packets will have a predefined size.
  * @param size Size of the packets.
  */
-void 
+void
 lora_implicit_header_mode(int size)
 {
    __implicit = 1;
@@ -157,7 +156,7 @@ lora_implicit_header_mode(int size)
  * Sets the radio transceiver in idle mode.
  * Must be used to change registers and access the FIFO.
  */
-void 
+void
 lora_idle(void)
 {
    lora_write_reg(REG_OP_MODE, MODE_LONG_RANGE_MODE | MODE_STDBY);
@@ -167,9 +166,9 @@ lora_idle(void)
  * Sets the radio transceiver in sleep mode.
  * Low power consumption and FIFO is lost.
  */
-void 
+void
 lora_sleep(void)
-{ 
+{
    lora_write_reg(REG_OP_MODE, MODE_LONG_RANGE_MODE | MODE_SLEEP);
 }
 
@@ -177,7 +176,7 @@ lora_sleep(void)
  * Sets the radio transceiver in receive mode.
  * Incoming packets will be received.
  */
-void 
+void
 lora_receive(void)
 {
    lora_write_reg(REG_OP_MODE, MODE_LONG_RANGE_MODE | MODE_RX_CONTINUOUS);
@@ -187,7 +186,7 @@ lora_receive(void)
  * Configure power level for transmission
  * @param level 2-17, from least to most power
  */
-void 
+void
 lora_set_tx_power(int level)
 {
    // RF9x module uses PA_BOOST pin
@@ -200,7 +199,7 @@ lora_set_tx_power(int level)
  * Set carrier frequency.
  * @param frequency Frequency in Hz
  */
-void 
+void
 lora_set_frequency(long frequency)
 {
    __frequency = frequency;
@@ -216,7 +215,7 @@ lora_set_frequency(long frequency)
  * Set spreading factor.
  * @param sf 6-12, Spreading factor to use.
  */
-void 
+void
 lora_set_spreading_factor(int sf)
 {
    if (sf < 6) sf = 6;
@@ -237,7 +236,7 @@ lora_set_spreading_factor(int sf)
  * Set bandwidth (bit rate)
  * @param sbw Bandwidth in Hz (up to 500000)
  */
-void 
+void
 lora_set_bandwidth(long sbw)
 {
    int bw;
@@ -256,10 +255,10 @@ lora_set_bandwidth(long sbw)
 }
 
 /**
- * Set coding rate 
+ * Set coding rate
  * @param denominator 5-8, Denominator for the coding rate 4/x
- */ 
-void 
+ */
+void
 lora_set_coding_rate(int denominator)
 {
    if (denominator < 5) denominator = 5;
@@ -273,7 +272,7 @@ lora_set_coding_rate(int denominator)
  * Set the size of preamble.
  * @param length Preamble length in symbols.
  */
-void 
+void
 lora_set_preamble_length(long length)
 {
    lora_write_reg(REG_PREAMBLE_MSB, (uint8_t)(length >> 8));
@@ -284,7 +283,7 @@ lora_set_preamble_length(long length)
  * Change radio sync word.
  * @param sw New sync word to use.
  */
-void 
+void
 lora_set_sync_word(int sw)
 {
    lora_write_reg(REG_SYNC_WORD, sw);
@@ -293,7 +292,7 @@ lora_set_sync_word(int sw)
 /**
  * Enable appending/verifying packet CRC.
  */
-void 
+void
 lora_enable_crc(void)
 {
    lora_write_reg(REG_MODEM_CONFIG_2, lora_read_reg(REG_MODEM_CONFIG_2) | 0x04);
@@ -302,7 +301,7 @@ lora_enable_crc(void)
 /**
  * Disable appending/verifying packet CRC.
  */
-void 
+void
 lora_disable_crc(void)
 {
    lora_write_reg(REG_MODEM_CONFIG_2, lora_read_reg(REG_MODEM_CONFIG_2) & 0xfb);
@@ -311,7 +310,7 @@ lora_disable_crc(void)
 /**
  * Perform hardware initialization.
  */
-int 
+int
 lora_init(void)
 {
    esp_err_t ret;
@@ -332,7 +331,7 @@ lora_init(void)
       .quadhd_io_num = -1,
       .max_transfer_sz = 0
    };
-           
+
    ret = spi_bus_initialize(VSPI_HOST, &bus, 0);
    assert(ret == ESP_OK);
 
@@ -383,7 +382,7 @@ lora_init(void)
  * @param buf Data to be sent
  * @param size Size of data.
  */
-void 
+void
 lora_send_packet(uint8_t *buf, int size)
 {
    /*
@@ -392,11 +391,11 @@ lora_send_packet(uint8_t *buf, int size)
    lora_idle();
    lora_write_reg(REG_FIFO_ADDR_PTR, 0);
 
-   for(int i=0; i<size; i++) 
+   for(int i=0; i<size; i++)
       lora_write_reg(REG_FIFO, *buf++);
-   
+
    lora_write_reg(REG_PAYLOAD_LENGTH, size);
-   
+
    /*
     * Start transmission and wait for conclusion.
     */
@@ -413,7 +412,7 @@ lora_send_packet(uint8_t *buf, int size)
  * @param size Available size in buffer (bytes).
  * @return Number of bytes received (zero if no packet available).
  */
-int 
+int
 lora_receive_packet(uint8_t *buf, int size)
 {
    int len = 0;
@@ -435,10 +434,10 @@ lora_receive_packet(uint8_t *buf, int size)
    /*
     * Transfer data from radio.
     */
-   lora_idle();   
+   lora_idle();
    lora_write_reg(REG_FIFO_ADDR_PTR, lora_read_reg(REG_FIFO_RX_CURRENT_ADDR));
    if(len > size) len = size;
-   for(int i=0; i<len; i++) 
+   for(int i=0; i<len; i++)
       *buf++ = lora_read_reg(REG_FIFO);
 
    return len;
@@ -457,7 +456,7 @@ lora_received(void)
 /**
  * Return last packet's RSSI.
  */
-int 
+int
 lora_packet_rssi(void)
 {
    return (lora_read_reg(REG_PKT_RSSI_VALUE) - (__frequency < 868E6 ? 164 : 157));
@@ -466,7 +465,7 @@ lora_packet_rssi(void)
 /**
  * Return last packet's SNR (signal to noise ratio).
  */
-float 
+float
 lora_packet_snr(void)
 {
    return ((int8_t)lora_read_reg(REG_PKT_SNR_VALUE)) * 0.25;
@@ -475,7 +474,7 @@ lora_packet_snr(void)
 /**
  * Shutdown hardware.
  */
-void 
+void
 lora_close(void)
 {
    lora_sleep();
@@ -487,7 +486,7 @@ lora_close(void)
 //   __rst = -1;
 }
 
-void 
+void
 lora_dump_registers(void)
 {
    int i;
@@ -499,3 +498,20 @@ lora_dump_registers(void)
    printf("\n");
 }
 
+/**
+ * Enable LowDataRateOptimize flag (Its use is mandated
+ * when the symbol duration exceeds 16ms.)
+ */
+void lora_enable_low_data_rate_optimize(void)
+{
+   lora_write_reg(REG_MODEM_CONFIG_3, lora_read_reg(REG_MODEM_CONFIG_3) | 0x08);
+}
+
+/**
+ * Disable LowDataRateOptimize flag (Its use is mandated
+ * when the symbol duration exceeds 16ms.)
+ */
+void lora_disable_low_data_rate_optimize(void)
+{
+   lora_write_reg(REG_MODEM_CONFIG_3, lora_read_reg(REG_MODEM_CONFIG_3) & ~0x08);
+}
